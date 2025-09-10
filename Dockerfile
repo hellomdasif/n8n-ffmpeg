@@ -1,4 +1,3 @@
-cat > Dockerfile <<'EOF'
 # Stage 1: downloader (has package manager) — grabs static ffmpeg build
 FROM debian:stable-slim AS downloader
 
@@ -29,4 +28,3 @@ RUN chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
  && chown node:node /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
 
 USER node
-EOF
