@@ -1,4 +1,4 @@
-# Stage 1: downloader (has package manager) — grabs static ffmpeg build and yt-dlp (linux standalone)
+# Stage 1: downloader (has package manager) — grabs static ffmpeg build
 FROM debian:stable-slim AS downloader
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -17,13 +17,9 @@ RUN set -eux; \
     cp "$FDIR"/ffprobe /tmp/ffprobe; \
     chmod a+rx /tmp/ffmpeg /tmp/ffprobe
 
-# download the standalone linux yt-dlp binary (multiarch or linux amd64)
-# Note: this is the "yt-dlp_linux" standalone binary (not the PyInstaller single-file that required libpython).
-# If your host/container is ARM, replace with an ARM-compatible binary or install via pip in the build stage.
-RUN curl -sSL -o /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" && \
-    chmod a+rx /tmp/yt-dlp
-
+# ----------------------
 # Stage 2: final image based on official n8n image
+# ----------------------
 FROM docker.n8n.io/n8nio/n8n:latest
 
 USER root
@@ -31,12 +27,15 @@ USER root
 # copy the static binaries into the final image
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
-COPY --from=downloader /tmp/yt-dlp /usr/local/bin/yt-dlp
 
-# permissions and ownership for the n8n user; clean up any temp files if present
-RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/yt-dlp \
+# Install python & pip, install yt-dlp via pip (build-time).
+# Clean apt lists to keep final image small. Make sure n8n (node) user can execute binaries.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates curl \
+ && python3 -m pip install --no-cache-dir -U yt-dlp \
+ && chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/yt-dlp \
  && chown node:node /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/yt-dlp \
- && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Switch back to the n8n runtime user
+# Switch back to non-root user used by n8n
 USER node
