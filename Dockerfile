@@ -1,4 +1,4 @@
-# Stage 1: downloader (has package manager) — grabs static ffmpeg build and yt-dlp
+# Stage 1: downloader (has package manager) — grabs static ffmpeg build and yt-dlp (linux standalone)
 FROM debian:stable-slim AS downloader
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -17,8 +17,8 @@ RUN set -eux; \
     cp "$FDIR"/ffprobe /tmp/ffprobe; \
     chmod a+rx /tmp/ffmpeg /tmp/ffprobe
 
-# download yt-dlp standalone binary
-RUN curl -sSL -o /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" && \
+# download the standalone linux yt-dlp binary (does NOT require python at runtime)
+RUN curl -sSL -o /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" && \
     chmod a+rx /tmp/yt-dlp
 
 # Stage 2: final image based on official n8n image
