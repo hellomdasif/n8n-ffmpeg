@@ -1,13 +1,11 @@
 # Stage 1: downloader — grab static ffmpeg build
 FROM debian:stable-slim AS downloader
-
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl xz-utils gnupg \
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl xz-utils gnupg \
  && rm -rf /var/lib/apt/lists/*
 
-# download static amd64 ffmpeg release and extract
 RUN set -eux; \
     cd /tmp; \
     curl -sSL -o ffmpeg-static.tar.xz "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"; \
@@ -17,43 +15,41 @@ RUN set -eux; \
     cp "$FDIR"/ffprobe /tmp/ffprobe; \
     chmod a+rx /tmp/ffmpeg /tmp/ffprobe
 
-# -------------------------------
-# Stage 2: final image (Debian-based / apt available)
-# -------------------------------
-FROM node:20-bullseye-slim AS final
+# (optional) download standalone linux yt-dlp binary (multiarch or amd64)
+# If you want yt-dlp standalone binary (no Python), uncomment:
+# RUN curl -sSL -o /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" && chmod a+rx /tmp/yt-dlp
 
+# Stage 2: final image (Debian-based / apt available)
+FROM node:20-bullseye-slim AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
 
 USER root
 
-# Install system deps, python + pip, and install n8n and yt-dlp
+# Install system deps, python + pip, and install yt-dlp (pip) and n8n
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    python3 python3-pip ca-certificates curl gnupg \
+ && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates curl gnupg \
  && python3 -m pip install --no-cache-dir -U yt-dlp \
  && npm install -g n8n@latest \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-# Copy static ffmpeg/ffprobe from downloader stage
+# Copy static ffmpeg/ffprobe (and optional yt-dlp) from downloader stage
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
+#COPY --from=downloader /tmp/yt-dlp /usr/local/bin/yt-dlp    # optional
 
-# Ensure binaries are executable and owned by node user
+# Ensure binaries are executable (no chown to avoid user lookup issues)
 RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
- && chown -R ${N8N_USER}:${N8N_USER} /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
+ && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
 
-# create n8n user home (node image usually has it)
-RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME}
+# Make sure n8n home exists and is writable
+RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME} || true
 
 # Switch to non-root user
 USER ${N8N_USER}
 
-# Expose default n8n port
 EXPOSE 5678
 
-# Default command (same as running `n8n`), can be overridden by Coolify environment/entrypoint config
-# Keep it simple — Coolify usually adds envs and overrides as needed
 CMD ["n8n", "start"]
