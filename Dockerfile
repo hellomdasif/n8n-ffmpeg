@@ -27,9 +27,13 @@ ENV N8N_HOME=/home/node
 
 USER root
 
-# Install system deps, python + pip, and install yt-dlp (pip) and n8n
+# Install system deps, python + pip, ImageMagick + pango + emoji font, and n8n
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates curl gnupg \
+ && apt-get install -y --no-install-recommends \
+      python3 python3-pip ca-certificates curl gnupg \
+      imagemagick \
+      libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
+      fonts-noto-color-emoji fonts-noto-core fonts-noto-ui-core \
  && python3 -m pip install --no-cache-dir -U yt-dlp \
  && npm install -g n8n@latest \
  && apt-get clean \
@@ -43,6 +47,10 @@ COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 # Ensure binaries are executable (no chown to avoid user lookup issues)
 RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
  && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
+
+# Optional simple healthcheck to ensure ImageMagick is present at runtime
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD command -v magick >/dev/null 2>&1 || command -v convert >/dev/null 2>&1 || exit 1
 
 # Make sure n8n home exists and is writable
 RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME} || true
