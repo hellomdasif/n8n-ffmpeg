@@ -19,24 +19,22 @@ RUN set -eux; \
 # If you want yt-dlp standalone binary (no Python), uncomment:
 # RUN curl -sSL -o /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" && chmod a+rx /tmp/yt-dlp
 
-# Stage 2: final image (Debian-based / apt available)
+# Stage 2: final image (Alpine-based n8n:next)
 FROM docker.n8n.io/n8nio/n8n:next AS final
-ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
 
 USER root
 
 # Install system deps, python + pip, ImageMagick + pango + emoji font
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      python3 python3-pip ca-certificates curl gnupg \
+RUN apk update \
+ && apk add --no-cache \
+      python3 py3-pip ca-certificates curl gnupg \
       imagemagick \
-      libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
-      fonts-noto-color-emoji fonts-noto-core fonts-noto-ui-core \
- && python3 -m pip install --no-cache-dir -U yt-dlp \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+      cairo pango gdk-pixbuf \
+      font-noto font-noto-emoji \
+ && python3 -m pip install --no-cache-dir --break-system-packages -U yt-dlp \
+ && rm -rf /var/cache/apk/*
 
 # Copy static ffmpeg/ffprobe (and optional yt-dlp) from downloader stage
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
