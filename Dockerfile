@@ -21,15 +21,13 @@ RUN set -eux; \
 
 # Stage 2: final image (Alpine-based n8n:next)
 FROM docker.n8n.io/n8nio/n8n:next AS final
-ENV N8N_USER=node
-ENV N8N_HOME=/home/node
 
 USER root
 
 # Install system deps, python + pip, ImageMagick + pango + emoji font
 RUN apk update \
  && apk add --no-cache \
-      python3 py3-pip ca-certificates curl gnupg \
+      python3 py3-pip \
       imagemagick \
       cairo pango gdk-pixbuf \
       font-noto font-noto-emoji \
@@ -41,20 +39,8 @@ COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 #COPY --from=downloader /tmp/yt-dlp /usr/local/bin/yt-dlp    # optional
 
-# Ensure binaries are executable (no chown to avoid user lookup issues)
-RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
- && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
+# Ensure binaries are executable
+RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
 
-# Optional simple healthcheck to ensure ImageMagick is present at runtime
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD command -v magick >/dev/null 2>&1 || command -v convert >/dev/null 2>&1 || exit 1
-
-# Make sure n8n home exists and is writable
-RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME} || true
-
-# Switch to non-root user
-USER ${N8N_USER}
-
-EXPOSE 5678
-
-CMD ["n8n", "start"]
+# Switch back to the original user from base image
+USER node
