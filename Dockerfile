@@ -20,14 +20,14 @@ RUN set -eux; \
 # RUN curl -sSL -o /tmp/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" && chmod a+rx /tmp/yt-dlp
 
 # Stage 2: final image (Debian-based / apt available)
-FROM node:20-bullseye-slim AS final
+FROM docker.n8n.io/n8nio/n8n:next AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
 
 USER root
 
-# Install system deps, python + pip, ImageMagick + pango + emoji font, and n8n
+# Install system deps, python + pip, ImageMagick + pango + emoji font
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       python3 python3-pip ca-certificates curl gnupg \
@@ -35,7 +35,6 @@ RUN apt-get update \
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
       fonts-noto-color-emoji fonts-noto-core fonts-noto-ui-core \
  && python3 -m pip install --no-cache-dir -U yt-dlp \
- && npm install -g n8n@latest \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
