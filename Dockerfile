@@ -31,7 +31,7 @@ RUN apt-get update \
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
       libjpeg-dev zlib1g-dev libfreetype6-dev \
       fonts-noto-color-emoji fonts-noto-core fonts-noto-ui-core \
- && python3 -m pip install --no-cache-dir -U yt-dlp Pillow \
+ && python3 -m pip install --no-cache-dir -U yt-dlp Pillow rembg onnxruntime \
  && npm install -g n8n@next \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
