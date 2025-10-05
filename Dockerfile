@@ -50,9 +50,9 @@ COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
  && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
 
-# Healthcheck for n8n availability
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1
+# Healthcheck disabled - n8n takes time to start with Ollama
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+#   CMD wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1
 
 # Make sure n8n home exists and is writable
 RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME} || true
