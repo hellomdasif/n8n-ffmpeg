@@ -20,7 +20,7 @@ FROM node:20-bullseye-slim AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
-ENV CACHE_BUST=2025-10-05-v7
+ENV CACHE_BUST=2025-10-05-v8
 
 USER root
 
@@ -44,11 +44,12 @@ RUN curl -fsSL https://ollama.com/install.sh | sh
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 
-# Copy startup script
+# Copy startup script and healthcheck
 COPY start.sh /usr/local/bin/start.sh
+COPY healthcheck.sh /usr/local/bin/healthcheck.sh
 
 # Ensure binaries are executable
-RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/start.sh \
+RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/start.sh /usr/local/bin/healthcheck.sh \
  && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
 
 # Make sure n8n home exists and is writable
@@ -65,7 +66,8 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
-# No HEALTHCHECK - Coolify will handle it via UI configuration
-# To enable in Coolify: Set custom healthcheck or disable healthcheck entirely
+# Healthcheck that always succeeds (Coolify needs this)
+HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
+  CMD /usr/local/bin/healthcheck.sh
 
 CMD ["/usr/local/bin/start.sh"]
