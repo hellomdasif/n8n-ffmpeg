@@ -26,7 +26,7 @@ USER root
 # Install system deps, python + pip, ImageMagick + pango + emoji font, Pillow dependencies, and n8n
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      python3 python3-pip ca-certificates curl gnupg \
+      python3 python3-pip ca-certificates curl gnupg procps \
       imagemagick \
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
       libjpeg-dev zlib1g-dev libfreetype6-dev \
