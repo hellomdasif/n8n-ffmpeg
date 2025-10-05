@@ -20,7 +20,7 @@ FROM node:20-bullseye-slim AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
-ENV CACHE_BUST=2025-10-05-v4
+ENV CACHE_BUST=2025-10-05-v5
 
 USER root
 
