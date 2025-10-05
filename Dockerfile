@@ -31,10 +31,16 @@ RUN apt-get update \
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
       libjpeg-dev zlib1g-dev libfreetype6-dev \
       fonts-noto-color-emoji fonts-noto-core fonts-noto-ui-core \
- && python3 -m pip install --no-cache-dir -U yt-dlp Pillow rembg onnxruntime \
+ && python3 -m pip install --no-cache-dir -U yt-dlp gallery-dl Pillow rembg onnxruntime \
  && npm install -g n8n@next \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+# Pre-pull llama3.2:3b model (optimized for 8GB RAM systems)
+RUN ollama serve & sleep 5 && ollama pull llama3.2:3b && pkill ollama
 
 # Copy static ffmpeg/ffprobe from downloader stage
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
@@ -44,16 +50,19 @@ COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
  && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
 
-# Optional simple healthcheck to ensure ImageMagick is present at runtime
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD command -v magick >/dev/null 2>&1 || command -v convert >/dev/null 2>&1 || exit 1
+# Healthcheck for n8n and Ollama availability
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:5678/healthz 2>/dev/null || exit 1
 
 # Make sure n8n home exists and is writable
 RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME} || true
 
+# Fix Ollama permissions for node user
+RUN mkdir -p /usr/share/ollama/.ollama && chown -R ${N8N_USER}:${N8N_USER} /usr/share/ollama/.ollama
+
 # Switch to non-root user
 USER ${N8N_USER}
 
-EXPOSE 5678
+EXPOSE 5678 11434
 
-CMD ["n8n", "start"]
+CMD ["sh", "-c", "ollama serve & n8n start"]
