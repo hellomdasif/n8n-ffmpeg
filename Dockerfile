@@ -20,7 +20,7 @@ FROM node:20-bullseye-slim AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
-ENV CACHE_BUST=2025-10-05-v6
+ENV CACHE_BUST=2025-10-05-v7
 
 USER root
 
@@ -65,8 +65,7 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
-# Healthcheck - simple process check (Coolify will handle HTTP checks)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD pgrep -f "n8n start" > /dev/null || exit 1
+# No HEALTHCHECK - Coolify will handle it via UI configuration
+# To enable in Coolify: Set custom healthcheck or disable healthcheck entirely
 
 CMD ["/usr/local/bin/start.sh"]
