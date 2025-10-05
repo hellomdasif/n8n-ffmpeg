@@ -63,6 +63,9 @@ RUN mkdir -p /usr/share/ollama/.ollama && chown -R ${N8N_USER}:${N8N_USER} /usr/
 # Switch to non-root user
 USER ${N8N_USER}
 
+# Define persistent volumes
+VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
+
 EXPOSE 5678 11434
 
 CMD ["sh", "-c", "ollama serve & n8n start"]
