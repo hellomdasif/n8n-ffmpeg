@@ -39,9 +39,6 @@ RUN apt-get update \
 # Install Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
-# Pre-pull llama3.2:3b model (optimized for 8GB RAM systems)
-RUN ollama serve & sleep 5 && ollama pull llama3.2:3b && pkill ollama
-
 # Copy static ffmpeg/ffprobe from downloader stage
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
@@ -68,4 +65,4 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
-CMD ["sh", "-c", "ollama serve & n8n start"]
+CMD ["sh", "-c", "ollama serve & sleep 3 && ollama pull llama3.2:3b & n8n start"]
