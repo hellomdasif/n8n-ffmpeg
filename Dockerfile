@@ -44,8 +44,11 @@ RUN curl -fsSL https://ollama.com/install.sh | sh
 COPY --from=downloader /tmp/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 
+# Copy startup script
+COPY start.sh /usr/local/bin/start.sh
+
 # Ensure binaries are executable
-RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
+RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/start.sh \
  && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
 
 # Make sure n8n home exists and is writable
@@ -62,4 +65,4 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
-CMD ["sh", "-c", "ollama serve > /dev/null 2>&1 & sleep 5 && (ollama pull llama3.2:3b > /dev/null 2>&1 &) && n8n start"]
+CMD ["/usr/local/bin/start.sh"]
