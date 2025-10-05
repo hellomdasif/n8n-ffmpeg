@@ -26,7 +26,7 @@ USER root
 # Install system deps, python + pip, ImageMagick + pango + emoji font, Pillow dependencies, and n8n
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      python3 python3-pip ca-certificates curl gnupg procps \
+      python3 python3-pip ca-certificates curl wget gnupg procps \
       imagemagick \
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
       libjpeg-dev zlib1g-dev libfreetype6-dev \
@@ -50,9 +50,9 @@ COPY --from=downloader /tmp/ffprobe /usr/local/bin/ffprobe
 RUN chmod a+rx /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
  && rm -rf /tmp/ffmpeg-static* /tmp/ffmpeg-static.tar.xz || true
 
-# Healthcheck for n8n and Ollama availability
+# Healthcheck for n8n availability
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:5678/healthz 2>/dev/null || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1
 
 # Make sure n8n home exists and is writable
 RUN mkdir -p ${N8N_HOME} && chown -R ${N8N_USER}:${N8N_USER} ${N8N_HOME} || true
