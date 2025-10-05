@@ -61,4 +61,4 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
-CMD ["sh", "-c", "ollama serve & sleep 3 && ollama pull llama3.2:3b & n8n start"]
+CMD ["sh", "-c", "ollama serve > /dev/null 2>&1 & sleep 5 && (ollama pull llama3.2:3b > /dev/null 2>&1 &) && n8n start"]
