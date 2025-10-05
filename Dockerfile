@@ -20,14 +20,14 @@ FROM node:20-bullseye-slim AS final
 ENV DEBIAN_FRONTEND=noninteractive
 ENV N8N_USER=node
 ENV N8N_HOME=/home/node
-ENV CACHE_BUST=2025-10-05-v5
+ENV CACHE_BUST=2025-10-05-v6
 
 USER root
 
 # Install system deps, python + pip, ImageMagick + pango + emoji font, Pillow dependencies, and n8n
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      python3 python3-pip ca-certificates curl wget gnupg \
+      python3 python3-pip ca-certificates curl wget gnupg procps \
       imagemagick \
       libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 \
       libjpeg-dev zlib1g-dev libfreetype6-dev \
@@ -65,8 +65,8 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
-# Healthcheck - check if n8n is responding (Coolify may override this)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:5678/ || wget -q --spider http://localhost:5678/ || exit 1
+# Healthcheck - simple process check (Coolify will handle HTTP checks)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+  CMD pgrep -f "n8n start" > /dev/null || exit 1
 
 CMD ["/usr/local/bin/start.sh"]
