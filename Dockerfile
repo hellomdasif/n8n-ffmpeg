@@ -32,7 +32,7 @@ RUN apt-get update \
       libjpeg-dev zlib1g-dev libfreetype6-dev \
       fonts-noto-color-emoji fonts-noto-core fonts-noto-ui-core \
  && python3 -m pip install --no-cache-dir -U yt-dlp gallery-dl Pillow rembg onnxruntime \
- && npm install -g n8n@next \
+ && npm install -g n8n \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
