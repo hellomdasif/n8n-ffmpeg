@@ -65,4 +65,8 @@ VOLUME ["/home/node/.n8n", "/usr/share/ollama/.ollama"]
 
 EXPOSE 5678 11434
 
+# Healthcheck - check if n8n is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD curl -f http://localhost:5678/ || exit 1
+
 CMD ["/usr/local/bin/start.sh"]
