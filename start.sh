@@ -14,9 +14,10 @@ sleep 10
 echo "Starting Ollama in background..."
 ollama serve > /dev/null 2>&1 &
 
-# Pull model in background (don't wait)
+# Pull models in background (don't wait)
 sleep 2
 ollama pull llama3.2:3b > /dev/null 2>&1 &
+ollama pull gemma3:4b > /dev/null 2>&1 &
 
 # Keep n8n in foreground
 wait $N8N_PID
